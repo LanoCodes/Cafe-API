@@ -2,17 +2,14 @@ from flask import Flask, jsonify, render_template, request
 from flask_sqlalchemy import SQLAlchemy
 import random
 
-# Link to postman documentation: https://documenter.getpostman.com/view/15465500/2s9Y5VU4et#intro
-
 app = Flask(__name__)
 
-##Connect to Database
+# Connect to Database
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///cafes.db'
 db = SQLAlchemy()
 db.init_app(app)
 
-
-## Café TABLE Configuration
+# Café Table Configuration
 class Cafe(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(250), unique=True, nullable=False)
@@ -39,16 +36,15 @@ def random_cafe():
     cafe_list = []
     for cafe in all_cafes:
         cafe_list.append(cafe)
+
     # Café that was randomly picked
     cafe_random = random.choice(cafe_list)
     return jsonify(
         cafe={
-            # 'id': cafe_random.id,
             'name': cafe_random.name,
             'map_url': cafe_random.map_url,
             'img_url': cafe_random.img_url,
             'location': cafe_random.location,
-
         },
         amenities={
             'seats': cafe_random.seats,
@@ -60,7 +56,7 @@ def random_cafe():
         }
     )
 
-## HTTP GET - Read Record
+# Read Record
 @app.route('/all')
 def all_cafes():
     result = db.session.execute(db.select(Cafe).order_by(Cafe.name))
@@ -110,7 +106,6 @@ def search():
             "map_url": cafe.map_url,
             "name": cafe.name,
             "seats": cafe.seats
-
         })
 
     if len(cafe_list) == 0:
@@ -124,14 +119,14 @@ def search():
             cafes=cafe_list
         )
 
-## HTTP POST - Create Record
+# Create Record
 @app.route('/add', methods=['POST'])
 def add_cafe():
-
     has_sockets = False
     has_toilet = False
     has_wifi = False
     can_take_calls = False
+
     if request.form['has_sockets'].lower() == 'true':
         has_sockets = True
     elif request.form['has_toilet'].lower() == 'true':
@@ -165,10 +160,11 @@ def add_cafe():
         }
     )
 
-## HTTP PUT/PATCH - Update Record
+# Update Record
 @app.route('/update-price/<cafe_id>', methods=['PATCH'])
 def update_price(cafe_id):
     cafe_to_update = db.session.get(Cafe, cafe_id)
+
     if cafe_to_update is not None:
         cafe_to_update.coffee_price = request.args['new_price']
         db.session.commit()
@@ -183,13 +179,12 @@ def update_price(cafe_id):
             }
         )
 
-## HTTP DELETE - Delete Record
+# Delete Record
 @app.route('/report-closed/<cafe_id>', methods=['DELETE'])
 def delete_cafe(cafe_id):
     cafe_to_delete = db.session.get(Cafe, cafe_id)
     if request.args['api_key'] == 'TopSecretAPIKey':
         if cafe_to_delete is not None:
-            # cafe_to_delete.coffee_price = request.args['new_price']
             db.session.delete(cafe_to_delete)
             db.session.commit()
 
